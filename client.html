@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div id="message-list">
+            <!-- list will contain all messages -->
+        </div>
+        <input type="text" id="message-input">
+        <button id="send-message">Send</button>
+    </div>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+
+    <script>
+        const socket=io.connect('http://localhost:3000');
+
+        const username=prompt('Enter your name');
+        socket.emit('join',username);
+
+        const messageInput=document.getElementById('message-input');
+        const messageList=document.getElementById('message-list');
+        const sendButton=document.getElementById('send-message');
+
+        sendButton.addEventListener('click',()=>{
+            const message=messageInput.value;
+            if(message){
+                socket.emit('new-message',message);
+
+                const messageElement=document.createElement('div');
+                messageElement.innerText=username+': '+message;
+                messageList.appendChild(messageElement);
+
+                messageInput.value='';
+            }
+        });
+
+        socket.on('load_messages',(messages)=>{
+            messages.forEach(message => {
+                const messageElement = document.createElement('div');
+                messageElement.innerText = new Date(message.timestamp).toDateString() + " - " + message.username + ': ' + message.message;
+                messageList.appendChild(messageElement);
+            });
+        })
+
+        socket.on('broadcast-message',(usermessage)=>{
+            const messageElement = document.createElement('div');
+            messageElement.innerText = usermessage.username + ': ' + usermessage.message;
+            messageList.appendChild(messageElement);
+        });
+    </script>
+</body>
+</html>
